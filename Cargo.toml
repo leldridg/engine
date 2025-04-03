@@ -1,0 +1,15 @@
+[package]
+name = "engine"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies.gl]
+version = "*"
+
+[dependencies.glam]
+version = "*"
+
+[dependencies.sdl2]
+features = ["use_mac_framework", "image", "mixer"]
+version = "*"
