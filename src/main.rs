@@ -18,11 +18,6 @@ fn main() {
     let mut height: usize = 600;
     let mut winsdl = Winsdl::new(width, height).unwrap();
     unsafe { gl::Viewport(0, 0, width as i32, height as i32); }
-    
-    let mut max_uniforms: gl::types::GLint = 0;
-    unsafe { gl::GetIntegerv(gl::MAX_VERTEX_UNIFORM_VECTORS, &mut max_uniforms); }
-    println!("Max uniforms: {}", max_uniforms);
-    println!("Maximum number of uniforms: {}", std::mem::size_of::<Vec3>());
 
     let mut orthographic: bool = false;
     let mut perspective: bool = false;
@@ -140,7 +135,7 @@ fn main() {
 
     view_matrix = Mat4::look_at_rh(Vec3::new(eye_x, eye_y, eye_z), Vec3::new(target_x, target_y, target_z), Vec3::new(up_x, up_y, up_z));
 
-    let gravity = Vec3::new(0., -0.5, 0.);
+    //let gravity = Vec3::new(0., -0.5, 0.);
 
     let mut last_frame_time = Instant::now();
 
@@ -301,7 +296,7 @@ fn main() {
             }
         }
         // apply gravity
-        cube_center += gravity * delta_time;
+        // cube_center += gravity * delta_time;
         cube.set_model_matrix(Mat4::from_translation(cube_center));
         unsafe {
             gl::ClearColor(54./255., 159./255., 219./255., 1.0);
