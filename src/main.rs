@@ -6,11 +6,13 @@ use glam::{Mat4, Vec3, Vec4, Quat};
 mod winsdl;
 use winsdl::Winsdl;
 
-mod objects;
-use objects::*;
-
 mod graphics;
 use graphics::*;
+
+mod dropper;
+use dropper::Dropper;
+
+mod object;
 
 fn main() {
 // window
@@ -19,93 +21,10 @@ fn main() {
     let mut winsdl = Winsdl::new(width, height).unwrap();
     unsafe { gl::Viewport(0, 0, width as i32, height as i32); }
 
-    let mut orthographic: bool = false;
-    let mut perspective: bool = false;
-
     let program = create_program().unwrap();
     program.set();
 
-    let plane_vertices: Vec<Vec3> = vec! [
-        Vec3::new(-1., 0., 1.),
-        Vec3::new(-1., 0., -1.),
-        Vec3::new(1., 0., -1.),
-        Vec3::new(1., 0.,  1.),
-    ];
-
-    let plane_indices: Vec<u32> = vec! [
-        0, 1, 2,
-        2, 3, 0,
-    ];
-
-    let cube_vertices: Vec<Vec3> = vec! [
-        // front face
-        Vec3::new(-0.5, -0.5, -0.5),
-        Vec3::new(-0.5, 0.5, -0.5),
-        Vec3::new(0.5, 0.5, -0.5),
-        Vec3::new(0.5, -0.5, -0.5),
-
-        // back face
-        Vec3::new(0.5, -0.5, 0.5),
-        Vec3::new(0.5, 0.5, 0.5),
-        Vec3::new(-0.5, 0.5, 0.5),
-        Vec3::new(-0.5, -0.5, 0.5),
-    ];
-
-    let cube_indices: Vec<u32> = vec! [
-        // front face
-        0, 1, 2,
-        2, 3, 0,
-
-        // back face
-        4, 5, 6,
-        6, 7, 4,
-
-        // top face
-        1, 6, 5,
-        5, 2, 1,
-
-        // bottom face
-        7, 0, 3,
-        3, 4, 7,
-
-        // right face
-        3, 2, 5,
-        5, 4, 3,
-
-        // left face
-        7, 6, 1,
-        1, 0, 7,
-    ];
-
-    let mut cube_center = Vec3::new(0.,0.,0.);
-
-// objects to render
-
-    let mut cube = Object::new(&cube_vertices, &cube_indices, cube_center, Vec3::new(1., 0., 0.));
-    //let cube2 = Object::new(&cube_vertices, &cube_indices, Vec3::new(0.,0.,0.), Vec3::new(0., 1., 0.));
-    let mut plane = Object::new(&plane_vertices, &plane_indices, Vec3::new(0.,0.,0.), Vec3::new(0., 0., 1.));
-    plane.set_model_matrix(Mat4::from_scale_rotation_translation(Vec3::new(5., 1., 5.), Quat::IDENTITY, Vec3::new(0., -3., 0.)));
-
-
-// view and projection matrices
-
-    let mut view_matrix: Mat4;
-    let mut projection_matrix: Mat4 = Mat4::IDENTITY;
-
-// values for projection
-
-    let l = -10.;
-    let r = 10.;
-    let b = -10.;
-    let t = 10.;
-    let n = 0.1;
-    let f = 100.;
-
-    let aspect_ratio = (r - l) / (t - b);
-    println!("Aspect ratio is {} for r {}, l {}, t {}, and b {}", aspect_ratio, r, l, t, b);
-
-    let fov_y=(2.0 * ((t - b) / (2.0 * n)) as f32).atan();
-    println!("Fov_y is {} for t {}, b {}, n {}", fov_y, t, b, n);
+    // INITIALIZE
 
     let u_resolution = Uniform::new(program.id(), "u_resolution").unwrap();
     let u_model_matrix = Uniform::new(program.id(), "u_model_matrix").unwrap();
@@ -113,7 +32,7 @@ fn main() {
     let u_projection_matrix = Uniform::new(program.id(), "u_projection_matrix").unwrap();
     let u_color = Uniform::new(program.id(), "u_color").unwrap();
 
-    println!("u_color location: {}", u_color.id);
+    Dropper::initialize();
 
     unsafe { 
         gl::Uniform2f(u_resolution.id, width as f32, height as f32);
@@ -122,28 +41,12 @@ fn main() {
         gl::DepthFunc(gl::LESS);
     }
 
-    let mut eye_x = 0.0;
-    let mut eye_y = 0.0;
-    //let mut eye_z = 5.;
-    let mut eye_z = 5.0;
-    let target_x = 0.;
-    let target_y = 0.;
-    let mut target_z = 0.;
-    let up_x = 0.;
-    let mut up_y = 1.;
-    let up_z = 0.;
-
-    view_matrix = Mat4::look_at_rh(Vec3::new(eye_x, eye_y, eye_z), Vec3::new(target_x, target_y, target_z), Vec3::new(up_x, up_y, up_z));
-
-    //let gravity = Vec3::new(0., -0.5, 0.);
-
     let mut last_frame_time = Instant::now();
 
     'running: loop {
-    
-        let current_frame_time = Instant::now();
-        let delta_time = current_frame_time.duration_since(last_frame_time).as_secs_f32();
-        last_frame_time = current_frame_time;
+
+        Dropper::update();
+        Dropper::render();
 
         for event in winsdl.event_pump.poll_iter() {
             match event {
@@ -238,56 +141,12 @@ fn main() {
                                     cube_center[1] -= 0.1;
                                     cube.set_model_matrix(Mat4::from_translation(cube_center));
                                 },
-                                // camera movement
-                                sdl2::keyboard::Keycode::Left => { 
-                                    eye_x -= amt;
-                                },
-                                sdl2::keyboard::Keycode::Right => {
-                                    eye_x += amt;
-                                },
-                                sdl2::keyboard::Keycode::Up => {
-                                    eye_z -= amt;
-                                    //up_y -= amt;
-                                },
-                                sdl2::keyboard::Keycode::Down => {
-                                    eye_z += amt;
-                                    //up_y += amt;
-                                },
-                                sdl2::keyboard::Keycode::Comma => {
-                                    eye_y -= amt;
-                                },
-                                sdl2::keyboard::Keycode::Period => {
-                                    eye_y += amt;
-                                },
-                                sdl2::keyboard::Keycode::LeftBracket => {
-                                    target_z -= amt;
-                                },
-                                sdl2::keyboard::Keycode::RightBracket => {
-                                    target_z += amt;
-                                },
-                                // projection
-                                sdl2::keyboard::Keycode::P => {
-                                    projection_matrix = Mat4::perspective_infinite_rh(fov_y, aspect_ratio, n);
-                                    perspective = true;
-                                    orthographic = false;
-                                },
-                                sdl2::keyboard::Keycode::O => {
-                                    projection_matrix = Mat4::orthographic_rh_gl(l, r, b, t, n, f);
-                                    orthographic = true;
-                                    perspective = false;
-                                },
                                 _ => { }
                             }
                             unsafe {
                                 gl::UniformMatrix4fv(u_projection_matrix.id, 1, gl::FALSE, projection_matrix.to_cols_array().as_ptr());
                             }
                             view_matrix = Mat4::look_at_rh(Vec3::new(eye_x, eye_y, eye_z), Vec3::new(target_x, target_y, target_z), Vec3::new(up_x, up_y, up_z));
-                            println!("Key pressed: {:?}", key);
-                            println!("eye_x: {}, eye_y: {}, eye_z: {}", eye_x, eye_y, eye_z);
-                            println!("up_x: {}, up_y: {}, up_z: {}", up_x, up_y, up_z);
-                            println!("target_z: {}", target_z);
-                            println!("cube_center: {:?}", cube_center);
-                            
                         },
                         None => { }
                     }
@@ -297,18 +156,8 @@ fn main() {
         }
         // apply gravity
         // cube_center += gravity * delta_time;
-        cube.set_model_matrix(Mat4::from_translation(cube_center));
-        unsafe {
-            gl::ClearColor(54./255., 159./255., 219./255., 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        
 
-            gl::UniformMatrix4fv(u_view_matrix.id, 1, gl::FALSE, view_matrix.to_cols_array().as_ptr());
-
-            cube.render(&u_model_matrix, &u_color);
-            //cube2.render(&u_model_matrix, &u_color);
-
-            plane.render(&u_model_matrix, &u_color);
-        }
 
         winsdl.window.gl_swap_window(); // update display
     }
