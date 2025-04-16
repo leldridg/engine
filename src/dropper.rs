@@ -1,15 +1,16 @@
-use std::collections::HashSet;
-
+use std::collections::HashMap;
 use glam::{Mat4, Vec3, Quat};
-use crate::object::Object;
 
-pub struct Dropper {
-    objects: HashSet<Object>,
-    projection_matrix: Mat4,
-    view_matrix: Mat4,
+use crate::object::Object;
+use crate::game::Game;
+
+pub struct Dropper<'a> {
+    pub(crate) objects: HashMap<&'a str, Object>,
+    pub(crate) projection_matrix: Mat4,
+    pub(crate) view_matrix: Mat4,
 }
 
-impl Game for Dropper {
+impl<'a> Game for Dropper<'a> {
     fn initialize(&mut self) {
         // Initialize the game
 
@@ -67,14 +68,12 @@ impl Game for Dropper {
 
         let cube_center = Vec3::new(0.,0.,0.);
 
-        let cube = Object::new("cube", &cube_vertices, &cube_indices, cube_center, Vec3::new(1., 0., 0.));
-        self.objects.push(cube);
+        self.objects.insert("cube", Object::new(&cube_vertices, &cube_indices, cube_center, Vec3::new(1., 0., 0.)));
 
-        let plane = Object::new("plane", &plane_vertices, &plane_indices, Vec3::new(0.,0.,0.), Vec3::new(0., 0., 1.));
-        self.objects.push(plane);
+        self.objects.insert("plane", Object::new(&plane_vertices, &plane_indices, Vec3::new(0.,0.,0.), Vec3::new(0., 0., 1.)));
 
         // Scale and translate plane
-        plane.set_model_matrix(Mat4::from_scale_rotation_translation(Vec3::new(5., 1., 5.), Quat::IDENTITY, Vec3::new(0., -3., 0.)));
+        self.objects.get_mut("plane").unwrap().set_model_matrix(Mat4::from_scale_rotation_translation(Vec3::new(5., 1., 5.), Quat::IDENTITY, Vec3::new(0., -3., 0.)));
 
         let l = -10.;
         let r = 10.;
@@ -103,22 +102,15 @@ impl Game for Dropper {
     fn update(&mut self) {
         // Update the game
 
-        
-        cube.set_model_matrix(Mat4::from_translation(cube_center));
+        let cube = self.objects.get_mut("cube").unwrap();
+        cube.set_model_matrix(Mat4::from_translation(cube.get_center()));
 
     }
 
-    fn render(&mut self) {
-        // Render the game
-        unsafe {
-            gl::ClearColor(54./255., 159./255., 219./255., 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        }
-        
-
-        for object in &self.objects {
-            object.render(&self.u_model_matrix, &self.u_color);
-        }
+    fn get_objects(&mut self) -> Vec<&Object> {
+        self.objects.iter()
+            .map(|(_, object)| object.clone())
+            .collect()
     }
 
     fn handle_event(&mut self, event: sdl2::event::Event) {

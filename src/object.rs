@@ -3,7 +3,6 @@ use glam::{Mat4, Vec3};
 use super::graphics::*;
 
 pub struct Object {
-    label: String,
     vbo: Vbo,
     vao: Vao,
     ibo: Ibo,
@@ -14,8 +13,7 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(label: &String, vertices: &Vec<Vec3>, indices: &Vec<u32>, center: Vec3, color: Vec3) -> Self {
-        let label = label;
+    pub fn new(vertices: &Vec<Vec3>, indices: &Vec<u32>, center: Vec3, color: Vec3) -> Self {
 
         let vbo = Vbo::gen();
         vbo.set(vertices);
@@ -29,7 +27,6 @@ impl Object {
         let model_matrix = Mat4::from_translation(center);
 
         Object {
-            label,
             vbo,
             vao,
             ibo,
@@ -42,6 +39,11 @@ impl Object {
 
     pub fn set_model_matrix(&mut self, matrix: Mat4) {
         self.model_matrix = matrix;
+        self.center = matrix.w_axis.truncate();
+    }
+
+    pub fn get_center(&self) -> Vec3 {
+        self.center
     }
 
     pub fn render(&self, u_model_matrix: &Uniform, u_color: &Uniform) {

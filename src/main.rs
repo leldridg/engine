@@ -1,7 +1,9 @@
 use std::time::Instant;
+use std::collections::HashMap;
 
+use game::Game;
 use sdl2::event::{Event, WindowEvent};
-use glam::{Mat4, Vec3, Vec4, Quat};
+use glam::{Mat4, Vec3, Vec4};
 
 mod winsdl;
 use winsdl::Winsdl;
@@ -13,6 +15,9 @@ mod dropper;
 use dropper::Dropper;
 
 mod object;
+use object::Object;
+
+mod game;
 
 fn main() {
 // window
@@ -24,15 +29,18 @@ fn main() {
     let program = create_program().unwrap();
     program.set();
 
-    // INITIALIZE
-
     let u_resolution = Uniform::new(program.id(), "u_resolution").unwrap();
     let u_model_matrix = Uniform::new(program.id(), "u_model_matrix").unwrap();
     let u_view_matrix = Uniform::new(program.id(), "u_view_matrix").unwrap();
     let u_projection_matrix = Uniform::new(program.id(), "u_projection_matrix").unwrap();
     let u_color = Uniform::new(program.id(), "u_color").unwrap();
 
-    Dropper::initialize();
+    // INITIALIZE GAME
+    let mut game: Box<dyn Game> = Box::new(Dropper {
+        objects: HashMap::new(),
+        projection_matrix: Mat4::IDENTITY,
+        view_matrix: Mat4::IDENTITY,
+    });
 
     unsafe { 
         gl::Uniform2f(u_resolution.id, width as f32, height as f32);
@@ -45,8 +53,8 @@ fn main() {
 
     'running: loop {
 
-        Dropper::update();
-        Dropper::render();
+        game.update();
+        render(game.get_objects(), &u_model_matrix, &u_color);
 
         for event in winsdl.event_pump.poll_iter() {
             match event {
@@ -160,5 +168,18 @@ fn main() {
 
 
         winsdl.window.gl_swap_window(); // update display
+    }
+}
+
+fn render(objects: Vec<&Object>, u_model_matrix: &Uniform, u_color: &Uniform) {
+    // Render the game
+    unsafe {
+        gl::ClearColor(54./255., 159./255., 219./255., 1.0);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+    }
+    
+
+    for object in objects {
+        object.render(u_model_matrix, u_color);
     }
 }
