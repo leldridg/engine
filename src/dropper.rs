@@ -205,55 +205,55 @@ impl Game for Dropper {
         let mut player_center = player.get_center();
 
         match event {
-            Event::MouseButtonDown { x, y, mouse_btn, .. } => {
-                match mouse_btn {
-                    sdl2::mouse::MouseButton::Left => {
-                        // normalize x and y coordinates
-                        let norm = Vec4::new(
-                            (2. * x as f32) / self.screen_width as f32 - 1.,
-                            1. - (2. * y as f32) / self.screen_height as f32,
-                            -1.,
-                            1.
-                        );
+            // Event::MouseButtonDown { x, y, mouse_btn, .. } => {
+            //     match mouse_btn {
+            //         sdl2::mouse::MouseButton::Left => {
+            //             // normalize x and y coordinates
+            //             let norm = Vec4::new(
+            //                 (2. * x as f32) / self.screen_width as f32 - 1.,
+            //                 1. - (2. * y as f32) / self.screen_height as f32,
+            //                 -1.,
+            //                 1.
+            //             );
 
-                        // inverse projection matrix
-                        let inverse_projection = self.projection_matrix.inverse();
+            //             // inverse projection matrix
+            //             let inverse_projection = self.projection_matrix.inverse();
 
-                        // multiply inverse projection matrix and (x_n, y_n, z, w)
-                        let mut ray_eye = inverse_projection * norm;
-                        ray_eye[2] = -1.;
-                        ray_eye[3] = 0.;
+            //             // multiply inverse projection matrix and (x_n, y_n, z, w)
+            //             let mut ray_eye = inverse_projection * norm;
+            //             ray_eye[2] = -1.;
+            //             ray_eye[3] = 0.;
 
-                        // inverse view matrix
-                        let inverse_view = self.view_matrix.inverse();
+            //             // inverse view matrix
+            //             let inverse_view = self.view_matrix.inverse();
 
-                        // get camera position
-                        let eye_position = inverse_view.col(3).truncate(); // Extract the translation (x, y, z)
-                        let eye_x = eye_position.x;
-                        let eye_y = eye_position.y;
-                        let eye_z = eye_position.z;
+            //             // get camera position
+            //             let eye_position = inverse_view.col(3).truncate(); // Extract the translation (x, y, z)
+            //             let eye_x = eye_position.x;
+            //             let eye_y = eye_position.y;
+            //             let eye_z = eye_position.z;
 
-                        // multiply inverse view matrix and ray_eye
-                        let ray_world = inverse_view * ray_eye;
+            //             // multiply inverse view matrix and ray_eye
+            //             let ray_world = inverse_view * ray_eye;
 
-                        // normalize ray_world
-                        let ray_direction = Vec3::new(ray_world[0], ray_world[1], ray_world[2]).normalize();
+            //             // normalize ray_world
+            //             let ray_direction = Vec3::new(ray_world[0], ray_world[1], ray_world[2]).normalize();
 
-                        // use current z value for cube
-                        let cube_z = player_center[2];
+            //             // use current z value for cube
+            //             let cube_z = player_center[2];
 
-                        // calculate the intersection point at the cube's z value
-                        let t = (cube_z - eye_z) / ray_direction[2];
-                        let world_x = eye_x + t * ray_direction[0];
-                        let world_y = eye_y + t * ray_direction[1];
+            //             // calculate the intersection point at the cube's z value
+            //             let t = (cube_z - eye_z) / ray_direction[2];
+            //             let world_x = eye_x + t * ray_direction[0];
+            //             let world_y = eye_y + t * ray_direction[1];
 
-                        player_center = Vec3::new(world_x, world_y, cube_z);
+            //             player_center = Vec3::new(world_x, world_y, cube_z);
 
-                        player.set_model_matrix(Mat4::from_translation(player_center));
-                    },
-                    _ => { }
-                }
-            },
+            //             player.set_model_matrix(Mat4::from_translation(player_center));
+            //         },
+            //         _ => { }
+            //     }
+            // },
             Event::KeyDown { keycode, .. } => {
                 match keycode {
                     Some(key) => {
