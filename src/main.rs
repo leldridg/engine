@@ -64,17 +64,10 @@ fn main() {
 
     'running: loop {
         let delta_time = last_frame_time.elapsed().as_secs_f32();
-        //println!("Delta time: {}", delta_time);
         last_frame_time = Instant::now();
-        
-        let num_objects = game.get_objects().len();
-        println!("Number of objects before collision handle: {}", num_objects);
 
         let collisions = detect_collisions(game.get_objects());
         game.handle_collisions(collisions);
-
-        let num_objects = game.get_objects().len();
-        println!("Number of objects after collision handle: {}", num_objects);
 
         for event in winsdl.event_pump.poll_iter() {
             match event {
@@ -109,7 +102,7 @@ fn detect_collisions(objects: Vec<(String, &Object)>) -> Vec<(String, String)> {
         for j in i + 1..objects.len() {
             if objects[i].1.intersect(&objects[j].1) {
                 collisions.push((objects[i].0.clone(), objects[j].0.clone()));
-                println!("Collision detected between {} and {}", objects[i].0, objects[j].0);
+                //println!("Collision detected between {} and {}", objects[i].0, objects[j].0);
             }
         }
     }

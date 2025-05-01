@@ -167,8 +167,8 @@ impl Game for Dropper {
             let mut new_cube = Object::new(&cube_vertices, &cube_indices, Vec3::new(0., 0., 0.), Vec3::new(1., 0., 0.));
             // Scale and translate new cube
             let mut rng = rand::rng();
-            let x = rng.random_range(-3.0..3.0);
-            new_cube.set_model_matrix(Mat4::from_scale_rotation_translation(Vec3::new(0.25, 0.25, 0.25), Quat::IDENTITY, Vec3::new(x, 3., 0.)));
+            let x = rng.random_range(-4.5..4.5);
+            new_cube.set_model_matrix(Mat4::from_scale_rotation_translation(Vec3::new(0.25, 0.25, 0.25), Quat::IDENTITY, Vec3::new(x, 5., 0.)));
             let cube_key = format!("cube_{}", self.counter);
             self.objects.insert(cube_key, new_cube);
         }
