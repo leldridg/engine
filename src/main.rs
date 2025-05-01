@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Instant};
 
 use game::Game;
 use sdl2::event::Event;
@@ -44,6 +44,8 @@ fn main() {
         view_matrix: Mat4::IDENTITY,
         screen_width: width as f32,
         screen_height: height as f32,
+        counter: 0,
+        time_since_drop: 0.0,
     });
 
     // INITIALIZE GAME
@@ -58,9 +60,21 @@ fn main() {
         gl::DepthFunc(gl::LESS);
     }
 
-    // let mut last_frame_time = Instant::now();
+    let mut last_frame_time = Instant::now();
 
     'running: loop {
+        let delta_time = last_frame_time.elapsed().as_secs_f32();
+        //println!("Delta time: {}", delta_time);
+        last_frame_time = Instant::now();
+        
+        let num_objects = game.get_objects().len();
+        println!("Number of objects before collision handle: {}", num_objects);
+
+        let collisions = detect_collisions(game.get_objects());
+        game.handle_collisions(collisions);
+
+        let num_objects = game.get_objects().len();
+        println!("Number of objects after collision handle: {}", num_objects);
 
         for event in winsdl.event_pump.poll_iter() {
             match event {
@@ -69,7 +83,7 @@ fn main() {
             }
         }
 
-        game.update();
+        game.update(delta_time);
 
         //RENDER
         unsafe {
@@ -89,9 +103,22 @@ fn main() {
     }
 }
 
-fn render(objects: Vec<&Object>, u_model_matrix: &Uniform, u_color: &Uniform) {
+fn detect_collisions(objects: Vec<(String, &Object)>) -> Vec<(String, String)> {
+    let mut collisions = Vec::new();
+    for i in 0..objects.len() {
+        for j in i + 1..objects.len() {
+            if objects[i].1.intersect(&objects[j].1) {
+                collisions.push((objects[i].0.clone(), objects[j].0.clone()));
+                println!("Collision detected between {} and {}", objects[i].0, objects[j].0);
+            }
+        }
+    }
+    collisions
+}
+
+fn render(objects: Vec<(String, &Object)>, u_model_matrix: &Uniform, u_color: &Uniform) {
     // Render the game objects
-    for object in objects {
+    for (_, object) in objects {
         object.render(u_model_matrix, u_color);
     }
 }

@@ -13,3 +13,6 @@ version = "*"
 [dependencies.sdl2]
 features = ["use_mac_framework", "image", "mixer"]
 version = "*"
+
+[dependencies.rand]
+version = "*"

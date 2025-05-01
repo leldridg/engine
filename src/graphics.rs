@@ -121,6 +121,7 @@ pub fn create_program() -> Result<Program, &'static str> {
     Ok(shader_program)
 }
 
+#[derive(Clone)]
 // vertex buffer object
 pub struct Vbo { 
     pub id: GLuint,
@@ -169,6 +170,7 @@ impl Drop for Vbo {
     }
 }
 
+#[derive(Clone)]
 // index buffer object
 pub struct Ibo { 
     pub id: GLuint,
@@ -217,6 +219,7 @@ impl Drop for Ibo {
     }
 }
 
+#[derive(Clone)]
 // vertex array object
 pub struct Vao { 
     pub id: GLuint,
